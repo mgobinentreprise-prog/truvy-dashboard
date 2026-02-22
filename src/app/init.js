@@ -1,76 +1,87 @@
-import { watchAuth } from '../firebase/auth'
-import { getTruvyUser } from '../firebase/firestore'
-import { setRoute } from './router'
-import { renderLogin } from '../modules/login/login'
-import { renderDashboardClient } from '../modules/dashboard/dashboard_client'
-import { renderDashboardPro } from '../modules/dashboard/dashboard_pro'
+// src/app/init.js
+
+import { watchAuth } from "../firebase/auth.js";
+import { getTruvyUser } from "../firebase/firestore.js";
+import { setRoute } from "./router.js";
+import { renderLogin } from "../modules/login/login.js";
+import { renderDashboardClient } from "../modules/dashboard/dashboard_client.js";
+import { renderDashboardPro } from "../modules/dashboard/dashboard_pro.js";
 
 function getPageMode() {
-  const el = document.querySelector('#app')
-  return el?.dataset?.page || 'auto'
+  const el = document.querySelector("#app");
+  return el?.dataset?.page || "auto";
+}
+
+function goLogin(root, error) {
+  setRoute("login");
+  if (error) renderLogin(root, { error });
+  else renderLogin(root);
 }
 
 export function initApp() {
-  const root = document.querySelector('#app')
-  if (!root) throw new Error('#app not found')
+  const root = document.querySelector("#app");
+  if (!root) throw new Error("#app not found");
 
   // On écoute l'état d'authentification Firebase
   watchAuth(async (user) => {
-    const mode = getPageMode()
+    const mode = getPageMode();
 
     // 🔒 Pas connecté → page login
     if (!user) {
-      setRoute('login')
-      renderLogin(root)
-      return
+      goLogin(root);
+      return;
     }
 
-    // 🔎 Récupération du document Firestore
-    const truvyUser = await getTruvyUser(user.uid)
+    // 🔎 Récupération du document Firestore (avec gestion d'erreur)
+    let truvyUser = null;
+    try {
+      truvyUser = await getTruvyUser(user.uid);
+    } catch (e) {
+      console.error("Firestore getTruvyUser error:", e);
+      goLogin(
+        root,
+        "Erreur Firestore (profil). Réessaie, ou vérifie réseau / bloqueurs / règles Firestore."
+      );
+      return;
+    }
 
     if (!truvyUser) {
-      setRoute('login')
-      renderLogin(root)
-      return
+      goLogin(root, "Profil introuvable (truvy_users).");
+      return;
     }
 
-    const role = truvyUser.role
+    const role = truvyUser.role;
 
-    if (mode === 'client' && role !== 'client') {
-      setRoute('login')
-      renderLogin(root, { error: "Accès réservé aux clients." })
-      return
+    if (mode === "client" && role !== "client") {
+      goLogin(root, "Accès réservé aux clients.");
+      return;
     }
 
-    if (mode === 'pro' && role !== 'pro') {
-      setRoute('login')
-      renderLogin(root, { error: "Accès réservé aux professionnels." })
-      return
+    if (mode === "pro" && role !== "pro") {
+      goLogin(root, "Accès réservé aux professionnels.");
+      return;
     }
 
-    const compteValide = truvyUser.compte_valide === true
-
+    const compteValide = truvyUser.compte_valide === true;
     if (!compteValide) {
-      setRoute('login')
-      renderLogin(root, { error: "Compte non validé. Contacte TRUVY pour activer ton accès." })
-      return
+      goLogin(root, "Compte non validé. Contacte TRUVY pour activer ton accès.");
+      return;
     }
 
     // 🧭 Routing selon rôle
-    if (role === 'pro') {
-      setRoute('pro')
-      renderDashboardPro(root, { user, truvyUser })
-      return
+    if (role === "pro") {
+      setRoute("pro");
+      renderDashboardPro(root, { user, truvyUser });
+      return;
     }
 
-    if (role === 'client') {
-      setRoute('client')
-      renderDashboardClient(root, { user, truvyUser })
-      return
+    if (role === "client") {
+      setRoute("client");
+      renderDashboardClient(root, { user, truvyUser });
+      return;
     }
 
     // Sécurité fallback
-    setRoute('login')
-    renderLogin(root)
-  })
+    goLogin(root);
+  });
 }
