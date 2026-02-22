@@ -17,6 +17,7 @@ export const auth = getAuth(app);
 
 // Important: auto-detect long polling (résout beaucoup de "offline" derrière bloqueurs / réseaux)
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
+  experimentalForceLongPolling: true,
   useFetchStreams: false,
+  ignoreUndefinedProperties: true,
 });
