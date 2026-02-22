@@ -15,7 +15,8 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// ✅ Force Firestore à utiliser long-polling (évite les faux "offline" sur certains navigateurs/réseaux)
+// Important: auto-detect long polling (résout beaucoup de "offline" derrière bloqueurs / réseaux)
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
+  useFetchStreams: false,
 });

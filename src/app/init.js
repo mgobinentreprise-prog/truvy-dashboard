@@ -33,17 +33,16 @@ export function initApp() {
     }
 
     // 🔎 Récupération du document Firestore (avec gestion d'erreur)
-    let truvyUser = null;
-    try {
-      truvyUser = await getTruvyUser(user.uid);
-    } catch (e) {
-      console.error("Firestore getTruvyUser error:", e);
-      goLogin(
-        root,
-        "Erreur Firestore (profil). Réessaie, ou vérifie réseau / bloqueurs / règles Firestore."
-      );
-      return;
-    }
+    let truvyUser = null
+try {
+  truvyUser = await getTruvyUser(user.uid)
+} catch (e) {
+  setRoute('login')
+  renderLogin(root, {
+    error: `Erreur Firestore (${e?.code || "unknown"}). Ouvre la console.`,
+  })
+  return
+}
 
     if (!truvyUser) {
       goLogin(root, "Profil introuvable (truvy_users).");
