@@ -1,4 +1,5 @@
 // src/firebase/config.js
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { initializeFirestore } from "firebase/firestore";
@@ -12,12 +13,12 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 
-// Important: auto-detect long polling (résout beaucoup de "offline" derrière bloqueurs / réseaux)
+// Transport Firestore robuste
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
   useFetchStreams: false,
-  ignoreUndefinedProperties: true,
 });
