@@ -1,16 +1,18 @@
-import { db } from './config'
-import { doc, getDoc } from 'firebase/firestore'
+// src/firebase/config.js
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-export async function getTruvyUser(uid) {
-  const ref = doc(db, 'truvy_users', uid)
-  const snapshot = await getDoc(ref)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
 
-  if (!snapshot.exists()) {
-    return null
-  }
+const app = initializeApp(firebaseConfig);
 
-  return {
-    id: snapshot.id,
-    ...snapshot.data(),
-  }
-}
+export const auth = getAuth(app);
+export const db = getFirestore(app);
